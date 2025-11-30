@@ -3,24 +3,57 @@ on:
   deployment_status: # Startet erst, wenn das Deployment fertig ist (optional)
   push:
     branches: [ main ] # Oder einfach bei jedem Push auf Main
+  # Das hier ermöglicht den manuellen Start mit Optionen
+  workflow_dispatch:
+    inputs:
+      update_snapshots:
+        description: 'Snapshots aktualisieren und committen?'
+        required: true
+        type: boolean
+        default: false
+        
+permissions:
+  contents: write # WICHTIG: Erlaubt dem Bot, Änderungen zu pushen
 
 jobs:
   test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright:v1.57.0-jammy # Das Docker Image!
+      image: mcr.microsoft.com/playwright:v1.49.0-jammy
     steps:
     - uses: actions/checkout@v4
     
     - name: Install dependencies
-      run: npm install
-      
+      run: npm install # Nutzt install statt ci, falls lockfile fehlt/falsch ist
+
+    # FALL 1: Normaler Test-Lauf (Passiert bei Push oder wenn Haken NICHT gesetzt ist)
     - name: Run Playwright tests
+      if: ${{ github.event.inputs.update_snapshots != 'true' }}
       run: npx playwright test
-      
+
+    # FALL 2: Update-Lauf (Nur wenn Haken gesetzt ist)
+    - name: Update Snapshots
+      if: ${{ github.event.inputs.update_snapshots == 'true' }}
+      run: npx playwright test --update-snapshots
+
+    # Nur ausführen, wenn wir im Update-Modus waren und sich Dateien geändert haben
+    - name: Commit and Push Changes
+      if: ${{ github.event.inputs.update_snapshots == 'true' }}
+      run: |
+        git config --global user.name 'GitHub Actions Bot'
+        git config --global user.email 'actions@github.com'
+        git add .
+        # Prüfen, ob es Änderungen gibt, sonst bricht der commit befehl ab
+        if git diff-index --quiet HEAD; then
+          echo "Keine Änderungen an den Snapshots."
+        else
+          git commit -m "chore: update playwright snapshots [skip ci]"
+          git push
+        fi
+
     - name: Upload Report
-      if: always() # Auch hochladen, wenn Tests fehlschlagen
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: playwright-report
