@@ -11,7 +11,10 @@ test.use({
 test('Menü öffnen und auf visuelle Veränderungen prüfen', async ({ page }) => {
   // 1. Seite aufrufen (Login passiert automatisch durch test.use oben)
   await page.goto('https://opensite-stage.c-1795.maxcluster.net/');
-
+  
+  // Videos Unsichtbar machen, Platz behalten (sicherer für Layouts)  SONST SCHEITERN DIE TESTS
+  await page.addStyleTag({ content: 'video { visibility: hidden !important; }' });
+  
   // 2. Den Button finden und klicken
   // Wir nutzen hier die Klasse aus deinem Code-Schnipsel, das ist sehr präzise.
   // Alternativ ginge auch: page.getByLabel('expand menu')
