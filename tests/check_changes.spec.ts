@@ -1,21 +1,32 @@
 import { test, expect } from '@playwright/test';
 
-test('Prüfe Startseite auf visuelle und inhaltliche Änderungen', async ({ page }) => {
-  // 1. Gehe zur URL (die Live-URL oder eine Staging-URL)
-  await page.goto('https://www.ihre-webseite.de');
+// Hier konfigurieren wir die Zugangsdaten für diesen spezifischen Test
+test.use({
+  httpCredentials: {
+    username: 'opensite', // Hier User für .htaccess eintragen
+    password: 'lgz9d76dq1n',     // Hier Passwort für .htaccess eintragen
+  },
+});
 
-  // 2. Inhaltliche Prüfung: Stimmt der Haupttitel noch?
-  await expect(page.locator('h1')).toHaveText('Willkommen bei uns');
+test('Menü öffnen und auf visuelle Veränderungen prüfen', async ({ page }) => {
+  // 1. Seite aufrufen (Login passiert automatisch durch test.use oben)
+  await page.goto('https://opensite-stage.c-1795.maxcluster.net/');
 
-  // 3. Visuelle Prüfung: Hat sich das Design der gesamten Seite verändert?
-  // Beim ersten Ausführen erstellt Playwright ein Referenzbild.
-  // Bei jedem weiteren Mal vergleicht es den Ist-Zustand damit.
-  await expect(page).toHaveScreenshot('homepage-design.png', { 
-    fullPage: true, // Screenshot der ganzen Seite, auch was man scrollen muss
-    maxDiffPixels: 100 // Erlaubt minimale Abweichungen (Rauschen)
+  // 2. Den Button finden und klicken
+  // Wir nutzen hier die Klasse aus deinem Code-Schnipsel, das ist sehr präzise.
+  // Alternativ ginge auch: page.getByLabel('expand menu')
+  await page.locator('.header__menu--toggle').click();
+
+  // 3. Warten, bis das Menü (das Ziel #flyout) wirklich sichtbar ist
+  // Das ist wichtig, damit die Animation fertig ist, bevor der Screenshot kommt.
+  const flyoutMenu = page.locator('#flyout');
+  await expect(flyoutMenu).toBeVisible();
+
+  // 4. Der Visual Check
+  // Dies macht einen Screenshot der GANZEN Seite mit offenem Menü
+  // und vergleicht ihn mit der Referenz.
+  await expect(page).toHaveScreenshot('menu-open-state.png', {
+    fullPage: true, 
+    animations: 'disabled' // Versucht CSS Animationen zu stoppen für stabilere Tests
   });
-
-  // 4. Visuelle Prüfung eines bestimmten Elements (z.B. Footer)
-  const footer = page.locator('footer');
-  await expect(footer).toHaveScreenshot('footer-component.png');
 });
