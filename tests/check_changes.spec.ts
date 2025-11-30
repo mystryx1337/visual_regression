@@ -21,12 +21,14 @@ test('Menü öffnen und auf visuelle Veränderungen prüfen', async ({ page }) =
   // Das ist wichtig, damit die Animation fertig ist, bevor der Screenshot kommt.
   const flyoutMenu = page.locator('#flyout');
   await expect(flyoutMenu).toBeVisible();
-
+  
   // 4. Der Visual Check
   // Dies macht einen Screenshot der GANZEN Seite mit offenem Menü
   // und vergleicht ihn mit der Referenz.
   await expect(page).toHaveScreenshot('menu-open-state.png', {
     fullPage: true, 
-    animations: 'disabled' // Versucht CSS Animationen zu stoppen für stabilere Tests
+    animations: 'disabled', // Versucht CSS Animationen zu stoppen für stabilere Tests
+    timeout: 15000, // Gib ihm 15 Sekunden Zeit, stabil zu werden (statt 5)
+    caret: 'hide' // Versteckt blinkende Text-Cursor
   });
 });
