@@ -44,8 +44,8 @@ test('Startseite: Menü öffnen und NUR das Menü-Element visuell prüfen', asyn
 });
 
 // --- TEST 2: Ganze Produktseite prüfen ---
-test('Produktdetailseite: Gesamte Seite visuell prüfen', async ({ page }) => {
-  await page.goto('https://opensite-stage.c-1795.maxcluster.net/beispiel-produkt'); // URL ANPASSEN!
+test('Prototypseite: Gesamte Seite visuell prüfen', async ({ page }) => {
+  await page.goto('https://opensite-stage.c-1795.maxcluster.net/prototype'); // URL ANPASSEN!
 
   // Auch hier: Banner hart ausblenden
   await page.addStyleTag({ 
