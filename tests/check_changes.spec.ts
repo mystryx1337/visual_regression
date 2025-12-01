@@ -11,14 +11,17 @@ test.use({
 test('Menü öffnen und auf visuelle Veränderungen prüfen', async ({ page }) => {
   // 1. Seite aufrufen (Login passiert automatisch durch test.use oben)
   await page.goto('https://opensite-stage.c-1795.maxcluster.net/');
-  await page.waitForTimeout(5000);
   
   // Videos Unsichtbar machen, Platz behalten (sicherer für Layouts)  SONST SCHEITERN DIE TESTS
   await page.addStyleTag({ content: 'video { visibility: hidden !important; }' });
   
   // Consent klicken, CTA entfernen
   await page.locator('.brlbs-btn-accept-all').click();
-  await page.locator('#interactive-close-button').click();
+  try {
+    await page.locator('#interactive-close-button').click({ timeout: 5000 });
+  } catch (error) {
+    console.log('Kein Interactive-Close-Button gefunden - Test läuft weiter.');
+  }
   
   // Menue-Button finden und klicken
   await page.locator('.header__menu--toggle').click();
