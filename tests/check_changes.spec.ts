@@ -15,9 +15,10 @@ test('Menü öffnen und auf visuelle Veränderungen prüfen', async ({ page }) =
   // Videos Unsichtbar machen, Platz behalten (sicherer für Layouts)  SONST SCHEITERN DIE TESTS
   await page.addStyleTag({ content: 'video { visibility: hidden !important; }' });
   
-  // 2. Den Button finden und klicken
-  // Wir nutzen hier die Klasse aus deinem Code-Schnipsel, das ist sehr präzise.
-  // Alternativ ginge auch: page.getByLabel('expand menu')
+  // Consent klicken
+  await page.locator('.brlbs-btn-accept-all').click();
+  
+  // Menue-Button finden und klicken
   await page.locator('.header__menu--toggle').click();
 
   // 3. Warten, bis das Menü (das Ziel #flyout) wirklich sichtbar ist
