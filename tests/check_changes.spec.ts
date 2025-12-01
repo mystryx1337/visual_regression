@@ -7,64 +7,69 @@ test.use({
 });
 
 // --- TEST 1: Nur das geöffnete Menü prüfen ---
-test('Menü öffnen und auf visuelle Veränderungen prüfen', async ({ page }) => {
-  // 1. Seite aufrufen (Login passiert automatisch durch test.use oben)
+test('Startseite: Menü öffnen und NUR das Menü-Element visuell prüfen', async ({ page }) => {
   await page.goto('https://opensite-stage.c-1795.maxcluster.net/');
   
-  // Videos Unsichtbar machen, Platz behalten (sicherer für Layouts)  SONST SCHEITERN DIE TESTS
-  await page.addStyleTag({ content: 'video { visibility: hidden !important; }' });
+  // --- AUFRÄUMEN (WICHTIGSTE ÄNDERUNG) ---
+  // Wir blenden Video UND den Cookie-Banner (inkl. Backdrop) hart aus.
+  // Das verhindert Klick-Probleme und macht die Tests viel schneller.
+  await page.addStyleTag({ 
+    content: `
+      video { visibility: hidden !important; }
+      #BorlabsCookieBox, .brlbs-cmpnt-dialog-backdrop { display: none !important; }
+    ` 
+  });
   
-  // Consent klicken, CTA entfernen
-  const consentBtn = page.locator('.brlbs-btn-accept-all');
-  if (await consentBtn.isVisible()) {
-      await consentBtn.click();
-  }
+  // Optionaler Close-Button (falls der noch stört)
   try {
-    await page.locator('#interactive-close-button').click({ timeout: 5000 });
+    const closeBtn = page.locator('#interactive-close-button');
+    if (await closeBtn.isVisible()) {
+       await closeBtn.click({ timeout: 2000 });
+    }
   } catch (error) {
-    console.log('Kein Interactive-Close-Button gefunden - Test läuft weiter.');
+    console.log('Kein Interactive-Close-Button (Test 1) - weiter gehts.');
   }
   
-  // Menue-Button finden und klicken
+  // Jetzt ist der Weg frei für den Klick
   await page.locator('.header__menu--toggle').click();
 
-  // 3. Warten, bis das Menü (das Ziel #flyout) wirklich sichtbar ist
-  // Das ist wichtig, damit die Animation fertig ist, bevor der Screenshot kommt.
   const flyoutMenu = page.locator('#flyout');
   await expect(flyoutMenu).toBeVisible();
   
-  // 4. Der Visual Check
-  // Dies macht einen Screenshot der GANZEN Seite mit offenem Menü
-  // und vergleicht ihn mit der Referenz.
   await expect(flyoutMenu).toHaveScreenshot('menu-element-only.png', {
     animations: 'disabled',
     timeout: 15000,
     caret: 'hide',
-    // Optional: Ein kleines Padding (Rand) um das Element herum aufnehmen
-    // scale: 'css', 
   });
 });
 
-test('Produktdetailseite: Prüfen ob Preisbox und Bild stimmen', async ({ page }) => {
-  // 1. Direkt zur zweiten Seite navigieren (Login ist schon durch test.use erledigt)
-  // Ändere die URL hier zu der Seite, die du testen willst
-  await page.goto('https://opensite-stage.c-1795.maxcluster.net/beispiel-produkt');
+// --- TEST 2: Ganze Produktseite prüfen ---
+test('Produktdetailseite: Gesamte Seite visuell prüfen', async ({ page }) => {
+  await page.goto('https://opensite-stage.c-1795.maxcluster.net/beispiel-produkt'); // URL ANPASSEN!
 
-  // 2. Wieder Aufräumen (Da neuer Test = neuer Context)
-  await page.addStyleTag({ content: 'video { visibility: hidden !important; }' });
-  await page.locator('.brlbs-btn-accept-all').click();
-  // Das Popup kommt vielleicht auch hier? Sicherheitshalber drin lassen:
+  // Auch hier: Banner hart ausblenden
+  await page.addStyleTag({ 
+    content: `
+      video { visibility: hidden !important; }
+      #BorlabsCookieBox, .brlbs-cmpnt-dialog-backdrop { display: none !important; }
+    ` 
+  });
+  
   try {
-    await page.locator('#interactive-close-button').click({ timeout: 5000 }); 
+     const closeBtn = page.locator('#interactive-close-button');
+     if (await closeBtn.isVisible()) {
+        await closeBtn.click({ timeout: 2000 });
+     }
   } catch (error) {
     console.log('Kein Interactive-Close-Button (Test 2) - weiter gehts.');
   }
   
-  // 3. Der Visual Check - GANZE SEITE
+  await page.waitForLoadState('networkidle').catch(() => {});
+
   await expect(page).toHaveScreenshot('product-full-page.png', {
     fullPage: true, 
     animations: 'disabled',
-    timeout: 20000, // Etwas mehr Zeit für FullPage Screenshots
+    timeout: 20000,
     caret: 'hide'
   });
 });
